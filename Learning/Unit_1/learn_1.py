@@ -9,7 +9,9 @@
 # pip install builtwith
 #----------------------------------------------------------------
 # import builtwith
-# a = builtwith.parse('http://example.webscraping.com')
+# # url = 'http://example.webscraping.com'
+# url = 'http://civil.seu.edu.cn/'
+# a = builtwith.parse(url)
 # print(a)
 #----------------------------------------------------------------
 
@@ -28,27 +30,27 @@
 # 确保发生5xx错误时 重新下载
 # 设置用户代理
 #----------------------------------------------------------------
-import urllib.request
+# import urllib.request
 
-def download(url, num_retries=2):
-	print('Downloading:',url)
-	try:
-		#写入User Agent信息
-		head = {}
-		head['User-Agent'] = 'Mozilla/5.0 (Linux; Android 4.1.1; Nexus 7 Build/JRO03D) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.166  Safari/535.19'
- 		#创建Request对象
-		req = urllib.request.Request(url, headers=head)
-    	#传入创建好的Request对象
-		response = urllib.request.urlopen(req)
-		html = response.read().decode('UTF-8')
-	except urllib.request.URLError as e:
-		print('Download error:',e.reason)
-		html = None
-		if num_retries > 0:
-			if hasattr(e,'code') and 500<=e.code<600:
-				# recursively retry 5xx HTTP errors
-				return download(url, num_retries-1)
-	return html
+# def download(url, num_retries=2):
+# 	print('Downloading:',url)
+# 	try:
+# 		#写入User Agent信息
+# 		head = {}
+# 		head['User-Agent'] = 'Mozilla/5.0 (Linux; Android 4.1.1; Nexus 7 Build/JRO03D) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.166  Safari/535.19'
+#  		#创建Request对象
+# 		req = urllib.request.Request(url, headers=head)
+#     	#传入创建好的Request对象
+# 		response = urllib.request.urlopen(req)
+# 		html = response.read().decode('UTF-8')
+# 	except urllib.request.URLError as e:
+# 		print('Download error:',e.reason)
+# 		html = None
+# 		if num_retries > 0:
+# 			if hasattr(e,'code') and 500<=e.code<600:
+# 				# recursively retry 5xx HTTP errors
+# 				return download(url, num_retries-1)
+# 	return html
 
 # url = 'http://www.buseu.cn/'
 # # url = 'http://httpstat.us/500'
