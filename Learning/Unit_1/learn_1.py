@@ -30,27 +30,27 @@
 # 确保发生5xx错误时 重新下载
 # 设置用户代理
 #----------------------------------------------------------------
-# import urllib.request
+import urllib.request
 
-# def download(url, num_retries=2):
-# 	print('Downloading:',url)
-# 	try:
-# 		#写入User Agent信息
-# 		head = {}
-# 		head['User-Agent'] = 'Mozilla/5.0 (Linux; Android 4.1.1; Nexus 7 Build/JRO03D) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.166  Safari/535.19'
-#  		#创建Request对象
-# 		req = urllib.request.Request(url, headers=head)
-#     	#传入创建好的Request对象
-# 		response = urllib.request.urlopen(req)
-# 		html = response.read().decode('UTF-8')
-# 	except urllib.request.URLError as e:
-# 		print('Download error:',e.reason)
-# 		html = None
-# 		if num_retries > 0:
-# 			if hasattr(e,'code') and 500<=e.code<600:
-# 				# recursively retry 5xx HTTP errors
-# 				return download(url, num_retries-1)
-# 	return html
+def download(url, num_retries=2):
+	print('Downloading:',url)
+	try:
+		#写入User Agent信息
+		head = {}
+		head['User-Agent'] = 'Mozilla/5.0 (Linux; Android 4.1.1; Nexus 7 Build/JRO03D) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.166  Safari/535.19'
+ 		#创建Request对象
+		req = urllib.request.Request(url, headers=head)
+    	#传入创建好的Request对象
+		response = urllib.request.urlopen(req)
+		html = response.read().decode('UTF-8')
+	except urllib.request.URLError as e:
+		print('Download error:',e.reason)
+		html = None
+		if num_retries > 0:
+			if hasattr(e,'code') and 500<=e.code<600:
+				# recursively retry 5xx HTTP errors
+				return download(url, num_retries-1)
+	return html
 
 # url = 'http://www.buseu.cn/'
 # # url = 'http://httpstat.us/500'
@@ -88,14 +88,58 @@
 # http://example.webscraping.com/places/default/view/2
 # http://example.webscraping.com/places/default/view/3 
 #----------------------------------------------------------------
+# import itertools
 
+# for page in itertools.count(1):
+# 	url = 'http://example.webscraping.com/places/default/view/-%d' % page
+# 	html = download(url)
+# 	if html is None:
+# 		break
+# 	else:
+# 		# success can scrape the result
+# 		pass
+# # 存在问题 若访问有某个间隔点 爬虫就会立即退出 
+# # 下为改进版本 连续发生多次下载错误后 才会退出
+
+# # maximum number of consecutive download errors allowed
+# max_errors = 5
+# # current number of consecutive download errors
+# num_errors = 0
+# for page in itertools.count(1):
+# 	url = 'http://example.webscraping.com/places/default/view/-%d' % page
+# 	html = download(url)
+# 	if html is None:
+# 		# received an error trying to download this webpage
+# 		num_errors += 1
+# 		if num_errors == max_errors:
+# 			break
+# 		else:
+# 			num_errors = 0
 #----------------------------------------------------------------
 
 
-#================================================================
-# 
+#========链接爬虫========================================================
+# 用正则表达式来确定需要下载哪些页面
 #----------------------------------------------------------------
+# 初始版本
+import re
 
+def link_crawler(seed_url, link_regex):
+	"""Crawl from the given seed URL following links matched by link_regex"""
+	crawl_queue = [seed_url]
+	while crawl_queue:
+		url = crawl_queue.pop()
+		html = download(url)
+		# filter for links matching our regular expression
+		for link in get_links(html):
+			if re.match(link_regex, link):
+				crawl_queue.append(link)
+
+def get_links(html):
+	"""Return a list of links from html"""
+	# a regular expression to extract all links from the webpages
+	webpages_regex = re.compile('<a[^>]+href=["\'](.*?)["\']', re.IGNORECASE)
+	return webpages_regex.findall(html)
 #----------------------------------------------------------------
 
 
