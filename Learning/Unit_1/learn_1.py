@@ -120,33 +120,70 @@ def download(url, num_retries=2):
 
 #========链接爬虫========================================================
 # 用正则表达式来确定需要下载哪些页面
-#----------------------------------------------------------------
-# 初始版本
-import re
+# 使用urlparse模块创建绝对路径
+# 记录哪些已经被爬取过 避免重复下载
 
-def link_crawler(seed_url, link_regex):
-	"""Crawl from the given seed URL following links matched by link_regex"""
-	crawl_queue = [seed_url]
-	while crawl_queue:
-		url = crawl_queue.pop()
-		html = download(url)
-		# filter for links matching our regular expression
-		for link in get_links(html):
-			if re.match(link_regex, link):
-				crawl_queue.append(link)
-
-def get_links(html):
-	"""Return a list of links from html"""
-	# a regular expression to extract all links from the webpages
-	webpages_regex = re.compile('<a[^>]+href=["\'](.*?)["\']', re.IGNORECASE)
-	return webpages_regex.findall(html)
+# 要爬取的是国家列表索引页和国家页面
+# http://example.webscraping.com/index/1
+# http://example.webscraping.com/view/Afghanistan-1
 #----------------------------------------------------------------
 
+# import re
+# import urllib.parse
 
-#================================================================
-# 
+# def link_crawler(seed_url, link_regex):
+# 	"""Crawl from the given seed URL following links matched by link_regex"""
+# 	crawl_queue = [seed_url]
+# 	# keep track which URL's have seen before
+# 	seen = set(crawl_queue) # set()一种集合类型 创建集合set、集合set添加、集合删除、交集、并集、差集
+# 	while crawl_queue:
+# 		url = crawl_queue.pop() # pop() 移除列表中的一个元素
+# 		html = download(url)
+# 		# filter for links matching our regular expression
+# 		for link in get_links(html):
+# 			if re.match(link_regex, link):
+# 				link = urllib.parse.urljoin(seed_url, link)
+# 				# check if have already seen this link
+# 				if link not in seen:
+# 					seen.add(link)
+# 					crawl_queue.append(link)
+# 					print(link)
+
+# def get_links(html):
+# 	"""Return a list of links from html"""
+# 	# a regular expression to extract all links from the webpages
+# 	webpages_regex = re.compile('<a[^>]+href=["\'](.*?)["\']', re.IGNORECASE)
+# 	return webpages_regex.findall(html)
+
+# link_crawler('http://example.webscraping.com','/places/default/(index|view)')
 #----------------------------------------------------------------
 
+
+#========下载限速========================================================
+# 两次下载直接添加延迟
+#----------------------------------------------------------------
+import datetime
+import time
+
+class Throttle:
+	""" Add a delay between downloads to the same domain
+	"""
+	def __init__(self,delay):
+		self.delay = delay
+		# timestamp of when a domain was last accessed
+		self.domains = {}
+
+	def wait(self, url):
+		domain = urllib.parse.urlparse(url).netloc
+		last_accessed = self.domains.get(domain)
+
+		if self.delay > 0 and last_accessed is not None:
+			sleep_secs = self.delay - (datetime.datetime.now()-last_accessed).seconds
+			if sleep_secs > 0:
+				time.sleep(sleep_secs)
+		self.domains[domain] = datetime.datetime.now()
+
+throttle = Throttle(delay)
 #----------------------------------------------------------------
 
 
