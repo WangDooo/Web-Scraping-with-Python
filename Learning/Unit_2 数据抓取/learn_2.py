@@ -1,41 +1,140 @@
 #================================================================
-# 
+# 三种方式
+# 1.正则表达式 2.BeautifulSoup 3.lxml
 #----------------------------------------------------------------
+import urllib.request
 
-#----------------------------------------------------------------
-
-
-#================================================================
-# 
-#----------------------------------------------------------------
-
-#----------------------------------------------------------------
-
-
-#================================================================
-# 
-#----------------------------------------------------------------
-
-#----------------------------------------------------------------
-
-
-#================================================================
-# 
-#----------------------------------------------------------------
-
-#----------------------------------------------------------------
-
-
-#================================================================
-# 
-#----------------------------------------------------------------
-
+def download(url, num_retries=2):
+	print('Downloading:',url)
+	try:
+		#写入User Agent信息
+		head = {}
+		head['User-Agent'] = 'Mozilla/5.0 (Linux; Android 4.1.1; Nexus 7 Build/JRO03D) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.166  Safari/535.19'
+ 		#创建Request对象
+		req = urllib.request.Request(url, headers=head)
+    	#传入创建好的Request对象
+		response = urllib.request.urlopen(req)
+		html = response.read().decode('UTF-8')
+	except urllib.request.URLError as e:
+		print('Download error:',e.reason)
+		html = None
+		if num_retries > 0:
+			if hasattr(e,'code') and 500<=e.code<600:
+				# recursively retry 5xx HTTP errors
+				return download(url, num_retries-1)
+	return html
 #----------------------------------------------------------------
 
 
-#================================================================
-# 
+#=========正则表达式=======================================================
+# 匹配<td>元素中的内容
 #----------------------------------------------------------------
+# import re
+# url = 'http://example.webscraping.com//places/default/view/United-Kingdom-239'
+# html = download(url)
+# # 第一版 杂项很多
+# # result = re.findall('<td class="w2p_fw">(.*?)</td>',html)
+# # 第二版
+# # result = re.findall('<tr id="places_area__row"><td class="w2p_fl"><label class="readonly" for="places_area" id="places_area__label">Area: </label></td><td class="w2p_fw">(.*?)</td>',html)
+# # 第三版
+# result = re.findall('<tr id="places_area__row">.*?<td\s*class=["\']w2p_fw["\']>(.*?)</td>',html)
+# print(result)
+
+#----------------------------------------------------------------
+
+
+#=========Beautiful Soup=======================================================
+# 能正确解析缺失的引号并闭合标签
+#----------------------------------------------------------------
+# from bs4 import BeautifulSoup
+
+# broken_html = '<ul class=country><li>Area<li>Population</ul>'
+# # parse the HTML
+# soup = BeautifulSoup(broken_html, 'lxml')
+# fixed_html = soup.prettify()
+# print(fixed_html)
+
+# ul = soup.find('ul', attrs={'class':'country'})
+# print(ul.find('li')) # find() return the first match
+# print(ul.find_all('li'))
+#----------------------------------------------------------------
+
+
+#==========Beautiful Soup======================================================
+# vs 正则表达式
+#----------------------------------------------------------------
+# from bs4 import BeautifulSoup
+
+# url = 'http://example.webscraping.com//places/default/view/United-Kingdom-239'
+# html = download(url)
+# soup = BeautifulSoup(html, 'lxml')
+# tr = soup.find(attrs={'id':'places_area__row'})
+# td = tr.find(attrs={'class':'w2p_fw'})
+# area = td.text
+# print(area)
+#----------------------------------------------------------------
+
+
+#========Lmxl========================================================
+# Lxml是基于libxml2这一XML解析库的Python封装。用C语言编写，解析速度快
+#----------------------------------------------------------------
+# import lxml.html
+
+# broken_html = '<ul class=country><li>Area<li>Population</ul>'
+# tree = lxml.html.fromstring(broken_html)
+# fixed_html = lxml.html.tostring(tree, pretty_print=True)
+# print(fixed_html.decode('utf8'))
+
+#----------------------------------------------------------------
+
+
+#========为链接爬虫添加抓取回调========================================================
+# 结果保存到CSV中
+#----------------------------------------------------------------
+import csv
+import re
+import lxml.html
+import urllib.parse
+
+def link_crawler(seed_url, link_regex, scrape_callback=None):
+	crawl_queue = [seed_url]
+	seen = set(crawl_queue) 
+	while crawl_queue:
+		url = crawl_queue.pop() # pop() 移除列表中的一个元素
+		html = download(url)
+		links = []
+		if scrape_callback:
+			links.extend(scrape_callback(url, html) or [])
+		# filter for links matching our regular expression
+		for link in get_links(html):
+			if re.match(link_regex, link):
+				link = urllib.parse.urljoin(seed_url, link)
+				# check if have already seen this link
+				if link not in seen:
+					seen.add(link)
+					crawl_queue.append(link)
+
+def get_links(html):
+	webpages_regex = re.compile('<a[^>]+href=["\'](.*?)["\']', re.IGNORECASE)
+	return webpages_regex.findall(html)
+
+class ScrapeCallback:
+	def __init__(self):
+		self.writer = csv.writer(open('countries.csv','w',encoding='utf8',newline=''))
+		self.fields = ('area', 'population', 'iso', 'country', 'capital', 'continent', 'tld', 'currency_code', 'currency_name', 'phone', 'postal_code_format', 'postal_code_regex', 'languages', 'neighbours')
+		self.writer.writerow(self.fields)
+
+	def __call__(self, url, html):
+		if re.search('/view/', url):
+			tree = lxml.html.fromstring(html)
+			row = []
+			for field in self.fields:
+				row.append(tree.cssselect('table > tr#places_{}__row > td.w2p_fw'.format(field))[0].text_content())
+			self.writer.writerow(row)
+
+
+if __name__ == '__main__':
+	link_crawler('http://example.webscraping.com/', '/places/default/(index|view)', scrape_callback=ScrapeCallback())
 
 #----------------------------------------------------------------
 
