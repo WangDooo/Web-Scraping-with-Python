@@ -1,6 +1,17 @@
-#================================================================
-# 
+#========为链接爬虫添加缓存支持========================================================
+# 对已经爬取的网页进行缓存的方案 让每个网页只下载一次
+# 修改download函数 使其在URL下载之前进行缓存检查
 #----------------------------------------------------------------
+class Downloader:
+	def __init__(self, delay=5, user_agent='wang', proxies=None, num_retries=1, cache=None):
+		self.throttle = Throttle(delay)
+		self.user_agent = user_agent
+		self.proxies = proxies
+		self.num_retries = num_retries
+		self.cache = cache
+
+	def __call__(self, url):
+		result = None
 
 #----------------------------------------------------------------
 
