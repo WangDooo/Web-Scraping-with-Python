@@ -19,10 +19,17 @@ url2 = 'http://s3.amazonaws.com/alexa-static/top-1m.csv.zip'
 D = Downloader()
 zipped_data = D(url2)
 urls = []
-with ZipFile(StringIO(zipped_data)) as zf:
+with ZipFile(zipped_data) as zf:
 	csv_filename = zf.namelist()[0]
-
-
+	csv_file = StringIO(zf.open(csv_filename))
+	# reader = pd.read_csv(csv_file)
+	# website = reader.iloc[0:1000,[1]] 
+	reader = csv.reader(csv_file.getvalue())
+	for _, website in reader:
+		urls.append('http://'+website)
+		print(len(urls))
+		if len(urls) > 20:
+			break
 print(urls) 
 #----------------------------------------------------------------
 
