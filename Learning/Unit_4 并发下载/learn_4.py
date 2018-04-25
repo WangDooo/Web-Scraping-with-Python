@@ -7,8 +7,23 @@
 
 #=========100万个网页=======================================================
 # Alexa网站数据
+# 压缩数据是在使用StringIO封装后才传给ZipFile的。因为ZipFile需要一个类似文件的接口，而不是字符串。
 #----------------------------------------------------------------
-url
+import csv
+from zipfile import ZipFile
+from io import StringIO
+from downloader import Downloader
+
+url = 'http://www.buseu.cn/'
+url2 = 'http://s3.amazonaws.com/alexa-static/top-1m.csv.zip'
+D = Downloader()
+zipped_data = D(url2)
+urls = []
+with ZipFile(StringIO(zipped_data)) as zf:
+	csv_filename = zf.namelist()[0]
+
+
+print(urls) 
 #----------------------------------------------------------------
 
 
