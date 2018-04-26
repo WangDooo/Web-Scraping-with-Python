@@ -5,53 +5,95 @@
 #----------------------------------------------------------------
 
 
-#=========100万个网页=======================================================
+#=========100万个网页==[打开Zip有错误StringIO]=====================================================
 # Alexa网站数据
 # 压缩数据是在使用StringIO封装后才传给ZipFile的。因为ZipFile需要一个类似文件的接口，而不是字符串。
 #----------------------------------------------------------------
+# import csv
+# from zipfile import ZipFile
+# from io import StringIO
+# from downloader import Downloader
+
+# url = 'http://www.buseu.cn/'
+# url2 = 'http://s3.amazonaws.com/alexa-static/top-1m.csv.zip'
+# D = Downloader()
+# zipped_data = D(url2)
+# urls = []
+# with ZipFile(zipped_data) as zf:
+# 	csv_filename = zf.namelist()[0]
+# 	csv_file = StringIO(zf.open(csv_filename))
+# 	# reader = pd.read_csv(csv_file)
+# 	# website = reader.iloc[0:1000,[1]] 
+# 	reader = csv.reader(csv_file.getvalue())
+# 	for _, website in reader:
+# 		urls.append('http://'+website)
+# 		print(len(urls))
+# 		if len(urls) > 20:
+# 			break
+# print(urls) 
+#----------------------------------------------------------------
+
+
+#========100万个网页=[直接读取csv文件] Class=======================================================
+# 
+#----------------------------------------------------------------
+# import csv
+# from downloader import Downloader
+
+# class  AlexaCallback():
+# 	def __init__(self, max_urls=1000):
+# 		self.max_urls = max_urls
+# 		self.seed_url = 'top-1m.csv'
+
+# 	def __call__(self, url, html):
+# 		if url == self.seed_url:
+# 			urls = []
+# 			with open(url,'r',newline='') as filereader:
+# 				for _,website in csv.reader(filereader):
+# 					urls.append('http://'+website)
+# 					if len(urls) == self.max_urls:
+# 						break
+# 			return urls
+
+		
+#----------------------------------------------------------------
+
+
+#=========100万个网页=[直接读取csv文件] Fn=======================================================
+# 
+#----------------------------------------------------------------
 import csv
-from zipfile import ZipFile
-from io import StringIO
 from downloader import Downloader
+import datetime
 
-url = 'http://www.buseu.cn/'
-url2 = 'http://s3.amazonaws.com/alexa-static/top-1m.csv.zip'
-D = Downloader()
-zipped_data = D(url2)
+max_urls = 33
+csv_url = 'top-cn-33.csv'
+starttime = datetime.datetime.now()
+
 urls = []
-with ZipFile(zipped_data) as zf:
-	csv_filename = zf.namelist()[0]
-	csv_file = StringIO(zf.open(csv_filename))
-	# reader = pd.read_csv(csv_file)
-	# website = reader.iloc[0:1000,[1]] 
-	reader = csv.reader(csv_file.getvalue())
-	for _, website in reader:
+with open(csv_url,'r',newline='') as filereader:
+	for _,website in csv.reader(filereader):
 		urls.append('http://'+website)
-		print(len(urls))
-		if len(urls) > 20:
+		if len(urls) == max_urls:
 			break
-print(urls) 
+D = Downloader()
+for website in urls:
+	D(website)
+
+endtime = datetime.datetime.now()
+print('运行时间：',(endtime-starttime).seconds)
 #----------------------------------------------------------------
 
 
 #================================================================
-# 
+# 计算运行时间
 #----------------------------------------------------------------
+# import datetime
 
-#----------------------------------------------------------------
-
-
-#================================================================
-# 
-#----------------------------------------------------------------
-
-#----------------------------------------------------------------
-
-
-#================================================================
-# 
-#----------------------------------------------------------------
-
+# starttime = datetime.datetime.now()
+# #long running
+# endtime = datetime.datetime.now()
+# print (endtime - starttime).seconds
 #----------------------------------------------------------------
 
 
